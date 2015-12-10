@@ -1,0 +1,96 @@
+ADB Project Documentation
+Peng Gao, Zhenwei Gu
+Code Explanation:
+The project is written in Object Oriented Programming Principle.
+Variable class defines the variables x1~x20, each variable object has its name and its integer value.
+Site class defines sites 1~10, each site object has its integer id number, a hashmap from containing variable’s name to variable’s object, and a hashmap from variable’s name to its list of locks.
+Lock class defines the lock on variable, each Lock object contains its lock type (shared or exclusive), its host transaction, The site that contains the variable, and the variable name.
+Transaction class defines the transaction, each Transaction object contains the transaction name, the transaction type (Read only or not), the start time stamp, a hashmap to store the current variable to value map to make future recover operation possible, and a list of locks it’s holding.
+CommandManager class is used to parse the input into unit commands, according to user’s specification, getCommands function either take input from standard input (T) or input file (F) by typing in the input path. If choose to input through standard input, the commands should end with “the end” to indicate the end of standard input. The output of getCommands function is a list (for different time stamps) of a list (for different commands at each time stamp) of String style commands.
+TransactionManager class is used to track the transactions and define some transaction operations. A TransactionManager object contains a list of all current transactions, a list of aboted transactions, and a list of transactions that are waiting to get lock and execute. A hashmap is used to map transaction’s name to the number of its operations that is pending. Function begin() and beginRO() defines operations to begin a transaction. DBSystem class define the system itself. A DBSystem contains a list of sites, a transaction manager, a command manager, a hashmap to store the current values of
+variables for future possible recover operation, and a list of failed sites. In the main function, first a DBSystem object is initialized, then in the Initialize function, all the variables and sites are initialized as required. Input type is specified by accepting user input character in standard input (“T” for standard input, “F” for input file). After command manager has parsed all the commands, the function handleAllCommands is called to deal with all the commands by first finishing the new coming commands, then dealing with the pending commands in the wait list in the current time stamp. For each command, handleCommand function is called once to process it. The handleCommand function will first parse the command and recognize what operation it wants to do, the one of the following functions is called to do the detailed steps: function begin() to begin a regular transaction, function beginRO() to begin a read-only transaction, read() to read variable, write() to give value to variable, dump() to dump the required information of the system (variables, sites, or all information), end() to commit a transaction, fail() to fail a site, recover() to recover a failed site.
+Additional Test Cases: 1.
+input:
+begin(T1)
+begin(T2) begin(T3) begin(T4) begin(T5) R(T1,x2) R(T2,x2) R(T3,x2) R(T4,x2) R(T5,x2) W(T3,x2,10) W(T5,x2,111)
+end(T1) end(T5)
+output:
+begin(T1)
+Regular transaction T1 begins at time 1.
+begin(T2)
+Regular transaction T2 begins at time 2.
+begin(T3)
+Regular transaction T3 begins at time 3.
+begin(T4)
+Regular transaction T4 begins at time 4.
+begin(T5)
+Regular transaction T5 begins at time 5.
+R(T1,x2)
+Transaction T1 reads 20 from Site1's x2.
+R(T2,x2)
+Transaction T2 reads 20 from Site1's x2.
+R(T3,x2)
+Transaction T3 reads 20 from Site1's x2.
+R(T4,x2)
+Transaction T4 reads 20 from Site1's x2.
+R(T5,x2)
+Transaction T5 reads 20 from Site1's x2.
+W(T3,x2,10)
+We abort T3. Because it has to wait for an older transaction. W(T5,x2,111)
+We abort T5. Because it has to wait for an older transaction. end(T1)
+Transaction T1 commits successfully.
+end(T5)
+T5 has aborted. "end(T5)" cannot be completed.
+2.
+input: begin(T3) begin(T1) begin(T2) W(T3,x2,22) W(T2,x4,44) R(T1,x4) R(T3,x4) end(T2) end(T3) R(T1,x2) end(T1)
+output:
+begin(T3)
+Regular transaction T3 begins at time 1.
+begin(T1)
+Regular transaction T1 begins at time 2.
+begin(T2)
+Regular transaction T2 begins at time 3.
+W(T3,x2,22)
+Transaction T3 writes x2 to all possible sites with new value as 22. W(T2,x4,44)
+Transaction T2 writes x4 to all possible sites with new value as 44. R(T1,x4)
+R(T1,x4)
+R(T3,x4)
+R(T1,x4)
+R(T3,x4)
+end(T2)
+Transaction T2 commits successfully. R(T1,x4)
+Transaction T1 reads 44 from Site1's x4. R(T3,x4)
+Transaction T3 reads 44 from Site1's x4. end(T3)
+Transaction T3 commits successfully. R(T1,x2)
+Transaction T1 reads 22 from Site1's x2. end(T1)
+Transaction T1 commits successfully.
+3.
+input: begin(T1) begin(T2) begin(T3) begin(T4) begin(T5) R(T1,x5) R(T2,x5) W(T3,x5,51) W(T1,x3,31) R(T4,x3) W(T5,x3,33) end(T1)
+end(T2) end(T3) end(T4) end(T5)
+output:
+begin(T1)
+Regular transaction T1 begins at time 1.
+begin(T2)
+Regular transaction T2 begins at time 2.
+begin(T3)
+Regular transaction T3 begins at time 3.
+begin(T4)
+Regular transaction T4 begins at time 4.
+begin(T5)
+Regular transaction T5 begins at time 5.
+R(T1,x5)
+Transaction T1 reads 50 from Site6's x5.
+R(T2,x5)
+Transaction T2 reads 50 from Site6's x5.
+W(T3,x5,51)
+We abort T3. Because it has to wait for an older transaction. W(T1,x3,31)
+Transaction T1 writes x3 to all possible sites with new value as 31. R(T4,x3)
+We abort T4. Because it has to wait for an older transaction. W(T5,x3,33)
+We abort T5. Because it has to wait for an older transaction. end(T1)
+Transaction T1 commits successfully.
+end(T2)
+Transaction T2 commits successfully.
+end(T3)
+T3 has aborted. "end(T3)" cannot be completed. end(T4)
+T4 has aborted. "end(T4)" cannot be completed. end(T5)
+T5 has aborted. "end(T5)" cannot be completed.
